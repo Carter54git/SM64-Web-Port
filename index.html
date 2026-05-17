@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Super Mario 64</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #06060c;
+      touch-action: none;
+      overscroll-behavior: none;
+      color: #e8e8f0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body:not(.game-started) #canvas {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    body:not(.game-started) #mobile-controls {
+      display: none !important;
+    }
+
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      padding-top: max(24px, env(safe-area-inset-top, 0px));
+      padding-right: max(24px, env(safe-area-inset-right, 0px));
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(40, 48, 120, 0.35) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 50% 100%, rgba(80, 20, 40, 0.2) 0%, transparent 50%),
+        linear-gradient(165deg, #0c0c14 0%, #12121f 45%, #080810 100%);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    body.game-started #start-screen {
+      display: none;
+    }
+
+    .start-panel {
+      width: min(100%, 520px);
+      text-align: center;
+      animation: panel-in 0.6s ease-out;
+    }
+
+    @keyframes panel-in {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .start-logo {
+      margin: 0 0 8px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(14px, 3.8vw, 22px);
+      line-height: 1.6;
+      color: #f8d878;
+      text-shadow:
+        0 0 24px rgba(248, 216, 120, 0.35),
+        3px 3px 0 #b8860b,
+        4px 4px 0 rgba(0, 0, 0, 0.5);
+      letter-spacing: 0.02em;
+    }
+
+    .start-sub {
+      margin: 0 0 28px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(200, 200, 220, 0.55);
+    }
+
+    .lang-switch {
+      position: absolute;
+      top: max(16px, env(safe-area-inset-top, 0px));
+      right: max(16px, env(safe-area-inset-right, 0px));
+      z-index: 2;
+      display: inline-flex;
+      margin: 0;
+      padding: 3px;
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.45);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .lang-btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      line-height: 1.4;
+      color: rgba(200, 200, 220, 0.55);
+      background: transparent;
+      transition: color 0.15s ease, background 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .lang-btn:hover {
+      color: #fff;
+    }
+
+    .lang-btn.active {
+      color: #1a1a28;
+      background: linear-gradient(180deg, #f0c030 0%, #d4a020 100%);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+    }
+
+    #start-btn {
+      display: inline-block;
+      margin: 0 0 32px;
+      padding: 18px 36px;
+      border: none;
+      border-radius: 0;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(14px, 3.2vw, 18px);
+      line-height: 1.4;
+      color: #fff;
+      background: linear-gradient(180deg, #e84a4a 0%, #c02828 48%, #901818 100%);
+      box-shadow:
+        0 0 0 4px #1a1a28,
+        0 0 0 6px #f0c030,
+        0 6px 0 #601010,
+        0 10px 20px rgba(0, 0, 0, 0.55);
+      text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #start-btn:hover {
+      filter: brightness(1.08);
+    }
+
+    #start-btn:active {
+      transform: translateY(4px);
+      box-shadow:
+        0 0 0 4px #1a1a28,
+        0 0 0 6px #f0c030,
+        0 2px 0 #601010,
+        0 4px 12px rgba(0, 0, 0, 0.45);
+    }
+
+    #start-btn:disabled {
+      cursor: wait;
+      filter: brightness(0.85);
+      transform: none;
+    }
+
+    .controls-card {
+      text-align: left;
+      padding: 20px 22px;
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.45);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .controls-card h2 {
+      margin: 0 0 14px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(9px, 2.4vw, 11px);
+      line-height: 1.6;
+      color: #88c8f8;
+      text-align: center;
+    }
+
+    .controls-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: minmax(72px, auto) 1fr;
+      gap: 12px;
+      align-items: baseline;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .control-row .key {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(7px, 1.9vw, 9px);
+      line-height: 1.5;
+      color: #f0c030;
+      text-align: right;
+    }
+
+    .control-row .desc {
+      color: rgba(220, 220, 235, 0.88);
+    }
+
+    .control-row.gamepad-hint {
+      grid-template-columns: 1fr;
+      margin-top: 4px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .control-row.gamepad-hint .key {
+      display: none;
+    }
+
+    .control-row.gamepad-hint .desc {
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.55;
+      color: rgba(180, 200, 230, 0.85);
+    }
+
+    .controls-section {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .controls-section-title {
+      margin: 0 0 10px;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(160, 180, 220, 0.7);
+    }
+
+    .controls-mobile {
+      display: none;
+    }
+
+    body.mobile .controls-desktop {
+      display: none;
+    }
+
+    body.mobile .controls-mobile {
+      display: block;
+    }
+
+    #container {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+    #canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      display: block;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      background: #000;
+    }
+
+    #rotate-hint {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.92);
+      font-size: 18px;
+      line-height: 1.4;
+      pointer-events: none;
+    }
+
+    body.mobile.portrait #rotate-hint {
+      display: flex;
+    }
+
+    #mobile-controls {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      pointer-events: none;
+      padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    }
+
+    body.mobile #mobile-controls {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .controls-left,
+    .controls-right {
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .controls-right {
+      align-items: flex-end;
+    }
+
+    #stick-zone {
+      position: relative;
+      width: min(32vmin, 132px);
+      height: min(32vmin, 132px);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(0, 0, 0, 0.45);
+      touch-action: none;
+    }
+
+    #move-knob {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(12vmin, 48px);
+      height: min(12vmin, 48px);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.35);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    #actions-zone {
+      display: grid;
+      grid-template-columns: repeat(2, min(13vmin, 52px));
+      grid-template-rows: auto repeat(2, min(13vmin, 52px));
+      gap: 8px;
+      justify-items: center;
+    }
+
+    #camera-zone {
+      display: grid;
+      grid-template-columns: repeat(3, min(11vmin, 44px));
+      grid-template-rows: repeat(3, min(11vmin, 44px));
+      gap: 4px;
+    }
+
+    .action-btn,
+    .camera-btn {
+      padding: 0;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(0, 0, 0, 0.45);
+      color: #fff;
+      font-weight: 700;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .action-btn {
+      width: min(13vmin, 52px);
+      height: min(13vmin, 52px);
+      border-radius: 50%;
+      font-size: clamp(11px, 3vmin, 14px);
+    }
+
+    .action-btn[data-code="Enter"] {
+      grid-column: 1 / -1;
+      width: min(12vmin, 48px);
+      height: min(12vmin, 48px);
+      font-size: 11px;
+    }
+
+    .action-btn[data-code="KeyX"] { grid-column: 2; grid-row: 2; }
+    .action-btn[data-code="KeyC"] { grid-column: 1; grid-row: 3; }
+    .action-btn[data-code="Space"] { grid-column: 2; grid-row: 3; }
+
+    .camera-btn {
+      width: min(11vmin, 44px);
+      height: min(11vmin, 44px);
+      border-radius: 10px;
+      font-size: clamp(10px, 2.8vmin, 13px);
+    }
+
+    .camera-btn[data-code="KeyW"] { grid-column: 2; grid-row: 1; }
+    .camera-btn[data-code="KeyA"] { grid-column: 1; grid-row: 2; }
+    .camera-btn[data-code="KeyS"] { grid-column: 2; grid-row: 3; }
+    .camera-btn[data-code="KeyD"] { grid-column: 3; grid-row: 2; }
+  </style>
+</head>
+<body>
+  <div id="start-screen">
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" class="lang-btn active" data-lang="ru" aria-pressed="true">RU</button>
+      <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <div class="start-panel">
+      <h1 class="start-logo">SUPER MARIO 64</h1>
+      <p class="start-sub" data-i18n="start.subtitle">Web Edition</p>
+      <button type="button" id="start-btn" data-i18n="start.button">START</button>
+      <div class="controls-card">
+        <h2 data-i18n="controls.title">УПРАВЛЕНИЕ</h2>
+        <div class="controls-grid controls-desktop">
+          <div class="control-row"><span class="key">↑ ↓ ← →</span><span class="desc" data-i18n="controls.move">Движение</span></div>
+          <div class="control-row"><span class="key">X</span><span class="desc" data-i18n="controls.jump">Прыжок</span></div>
+          <div class="control-row"><span class="key">C</span><span class="desc" data-i18n="controls.punch">Удар / поднять предмет</span></div>
+          <div class="control-row"><span class="key">Z</span><span class="desc" data-i18n="controls.z">Кнопка Z (присесть, полёт в шляпе)</span></div>
+          <div class="control-row"><span class="key">ENTER</span><span class="desc" data-i18n="controls.pause">Пауза / подтверждение</span></div>
+          <div class="control-row gamepad-hint"><span class="key">PAD</span><span class="desc" data-i18n="controls.gamepad">Лев. стик — движение · A — прыжок · B — Z · X/L1 — удар · Start — пауза · прав. стик — камера</span></div>
+          <div class="controls-section">
+            <p class="controls-section-title" data-i18n="controls.cameraTitle">Камера</p>
+            <div class="control-row"><span class="key">W A S D</span><span class="desc" data-i18n="controls.camera">Поворот камеры</span></div>
+          </div>
+        </div>
+        <div class="controls-grid controls-mobile">
+          <div class="control-row"><span class="key" data-i18n="controls.stickKey">СТИК</span><span class="desc" data-i18n="controls.move">Движение</span></div>
+          <div class="control-row"><span class="key">X</span><span class="desc" data-i18n="controls.jump">Прыжок</span></div>
+          <div class="control-row"><span class="key">C</span><span class="desc" data-i18n="controls.punchShort">Удар / поднять</span></div>
+          <div class="control-row"><span class="key">Z</span><span class="desc" data-i18n="controls.zShort">Кнопка Z</span></div>
+          <div class="control-row"><span class="key">START</span><span class="desc" data-i18n="controls.pauseMenu">Пауза / меню</span></div>
+          <div class="controls-section">
+            <p class="controls-section-title" data-i18n="controls.cameraMobileTitle">Камера (справа внизу)</p>
+            <div class="control-row"><span class="key">▲ ▼ ◀ ▶</span><span class="desc" data-i18n="controls.camera">Поворот камеры</span></div>
+          </div>
+          <p class="controls-section-title" style="margin-top:12px;text-align:center;" data-i18n="controls.landscape">Держите телефон горизонтально</p>
+          <p class="controls-section-title" style="margin-top:8px;text-align:center;font-size:10px;" data-i18n="controls.gamepadBt">Bluetooth-геймпад поддерживается</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="container">
+    <canvas class="emscripten" id="canvas" tabindex="0"></canvas>
+  </div>
+
+  <div id="rotate-hint" data-i18n-html="rotate.hint">Поверните телефон горизонтально<br>для лучшего управления</div>
+
+  <div id="mobile-controls" aria-hidden="true">
+    <div class="controls-left">
+      <div id="stick-zone">
+        <div id="move-knob"></div>
+      </div>
+    </div>
+
+    <div class="controls-right">
+      <div id="actions-zone">
+        <button type="button" class="action-btn" data-key="Enter" data-code="Enter">Start</button>
+        <button type="button" class="action-btn" data-key="x" data-code="KeyX">X</button>
+        <button type="button" class="action-btn" data-key="c" data-code="KeyC">C</button>
+        <button type="button" class="action-btn" data-key=" " data-code="Space">Z</button>
+      </div>
+
+      <div id="camera-zone">
+        <button type="button" class="camera-btn" data-key="w" data-code="KeyW">▲</button>
+        <button type="button" class="camera-btn" data-key="a" data-code="KeyA">◀</button>
+        <button type="button" class="camera-btn" data-key="s" data-code="KeyS">▼</button>
+        <button type="button" class="camera-btn" data-key="d" data-code="KeyD">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var MOBILE_RE = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i;
+      var isMobile = MOBILE_RE.test(navigator.userAgent || '') || (navigator.maxTouchPoints > 0 && Math.min(screen.width, screen.height) <= 1024);
+      var canvas = document.getElementById('canvas');
+      var mobileControls = document.getElementById('mobile-controls');
+      var gameStarted = false;
+      var LANG_KEY = 'sm64_lang';
+      var currentLang = 'ru';
+
+      var STRINGS = {
+        ru: {
+          'start.subtitle': 'Веб-версия',
+          'start.button': 'СТАРТ',
+          'start.loading': 'ЗАГРУЗКА...',
+          'start.aria': 'Начать игру',
+          'start.loadError': 'Не удалось загрузить игру. Проверьте подключение и обновите страницу.',
+          'controls.title': 'УПРАВЛЕНИЕ',
+          'controls.move': 'Движение',
+          'controls.jump': 'Прыжок',
+          'controls.punch': 'Удар / поднять предмет',
+          'controls.punchShort': 'Удар / поднять',
+          'controls.z': 'Кнопка Z (присесть, полёт в шляпе)',
+          'controls.zShort': 'Кнопка Z',
+          'controls.pause': 'Пауза / подтверждение',
+          'controls.pauseMenu': 'Пауза / меню',
+          'controls.gamepad': 'Лев. стик — движение · A — прыжок · B — Z · X/L1 — удар · Start — пауза · прав. стик — камера',
+          'controls.cameraTitle': 'Камера',
+          'controls.cameraMobileTitle': 'Камера (справа внизу)',
+          'controls.camera': 'Поворот камеры',
+          'controls.stickKey': 'СТИК',
+          'controls.landscape': 'Держите телефон горизонтально',
+          'controls.gamepadBt': 'Bluetooth-геймпад поддерживается',
+          'rotate.hint': 'Поверните телефон горизонтально<br>для лучшего управления'
+        },
+        en: {
+          'start.subtitle': 'Web Edition',
+          'start.button': 'START',
+          'start.loading': 'LOADING...',
+          'start.aria': 'Start game',
+          'start.loadError': 'Failed to load the game. Check your connection and refresh the page.',
+          'controls.title': 'CONTROLS',
+          'controls.move': 'Movement',
+          'controls.jump': 'Jump',
+          'controls.punch': 'Punch / pick up',
+          'controls.punchShort': 'Punch / grab',
+          'controls.z': 'Z button (crouch, wing cap fly)',
+          'controls.zShort': 'Z button',
+          'controls.pause': 'Pause / confirm',
+          'controls.pauseMenu': 'Pause / menu',
+          'controls.gamepad': 'Left stick — move · A — jump · B — Z · X/L1 — punch · Start — pause · right stick — camera',
+          'controls.cameraTitle': 'Camera',
+          'controls.cameraMobileTitle': 'Camera (bottom right)',
+          'controls.camera': 'Rotate camera',
+          'controls.stickKey': 'STICK',
+          'controls.landscape': 'Hold phone horizontally',
+          'controls.gamepadBt': 'Bluetooth gamepad supported',
+          'rotate.hint': 'Rotate your phone sideways<br>for better controls'
+        }
+      };
+
+      function t(key) {
+        var pack = STRINGS[currentLang] || STRINGS.ru;
+        if (pack[key] != null) return pack[key];
+        return STRINGS.en[key] != null ? STRINGS.en[key] : key;
+      }
+
+      function applyLang(lang) {
+        currentLang = lang === 'en' ? 'en' : 'ru';
+        try { localStorage.setItem(LANG_KEY, currentLang); } catch (e) {}
+        document.documentElement.lang = currentLang;
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+          var key = el.getAttribute('data-i18n');
+          if (key) el.textContent = t(key);
+        });
+        document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+          var key = el.getAttribute('data-i18n-html');
+          if (key) el.innerHTML = t(key);
+        });
+        document.querySelectorAll('.lang-btn').forEach(function (btn) {
+          var active = btn.getAttribute('data-lang') === currentLang;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        var sb = document.getElementById('start-btn');
+        if (sb && !gameStarted) sb.setAttribute('aria-label', t('start.aria'));
+      }
+
+      function initLang() {
+        var saved;
+        try { saved = localStorage.getItem(LANG_KEY); } catch (e) {}
+        var nav = (navigator.language || navigator.userLanguage || '').toLowerCase();
+        applyLang(saved || (nav.indexOf('ru') === 0 ? 'ru' : 'en'));
+        document.querySelectorAll('.lang-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            applyLang(btn.getAttribute('data-lang'));
+          });
+        });
+      }
+
+      if (isMobile) {
+        document.body.classList.add('mobile');
+        mobileControls.setAttribute('aria-hidden', 'false');
+        try {
+          Object.defineProperty(window, 'devicePixelRatio', { get: function () { return 1; }, configurable: true });
+        } catch (e) {}
+      }
+
+      var BUFFER_W = 1024;
+      var BUFFER_H = 512;
+
+      function visibleSize() {
+        var vv = window.visualViewport;
+        var w = (vv && vv.width) || window.innerWidth || document.documentElement.clientWidth || 320;
+        var h = (vv && vv.height) || window.innerHeight || document.documentElement.clientHeight || 240;
+        if (isMobile && w < h) {
+          var t = w;
+          w = h;
+          h = t;
+        }
+        return { w: Math.max(1, Math.floor(w)), h: Math.max(1, Math.floor(h)) };
+      }
+
+      function bufferSize() {
+        if (isMobile) return { w: BUFFER_W, h: BUFFER_H };
+        return visibleSize();
+      }
+
+      function gameSize() {
+        return visibleSize();
+      }
+
+      function fitCanvas() {
+        var css = visibleSize();
+        var buf = bufferSize();
+
+        if (canvas.width !== buf.w) canvas.width = buf.w;
+        if (canvas.height !== buf.h) canvas.height = buf.h;
+        canvas.widthNative = buf.w;
+        canvas.heightNative = buf.h;
+
+        canvas.style.setProperty('position', 'fixed', 'important');
+        canvas.style.setProperty('left', '0', 'important');
+        canvas.style.setProperty('top', '0', 'important');
+        canvas.style.setProperty('right', 'auto', 'important');
+        canvas.style.setProperty('bottom', 'auto', 'important');
+        canvas.style.setProperty('width', css.w + 'px', 'important');
+        canvas.style.setProperty('height', css.h + 'px', 'important');
+        canvas.style.setProperty('max-width', css.w + 'px', 'important');
+        canvas.style.setProperty('max-height', css.h + 'px', 'important');
+        canvas.style.setProperty('margin', '0', 'important');
+        canvas.style.setProperty('padding', '0', 'important');
+        canvas.style.setProperty('transform', 'none', 'important');
+        canvas.style.setProperty('transform-origin', 'top left', 'important');
+
+        document.body.classList.toggle('portrait', isMobile && css.h > css.w);
+        document.body.classList.toggle('landscape', isMobile && css.w >= css.h);
+
+        if (typeof Browser !== 'undefined') Browser.resizeCanvas = !isMobile;
+      }
+
+      window.__sm64Mobile = isMobile;
+      window.__sm64ViewportSize = gameSize;
+      window.__sm64CanvasSize = bufferSize;
+      window.__sm64DisplaySize = visibleSize;
+      window.__sm64FitCanvas = fitCanvas;
+
+      function guardBuffer() {
+        if (!isMobile) return;
+        if (canvas.width !== BUFFER_W || canvas.height !== BUFFER_H) fitCanvas();
+        requestAnimationFrame(guardBuffer);
+      }
+
+      function tryLockLandscape() {
+        try {
+          if (isMobile && screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(function () {});
+          }
+        } catch (e) {}
+      }
+
+      fitCanvas();
+
+      window.addEventListener('resize', fitCanvas);
+      window.addEventListener('orientationchange', function () {
+        setTimeout(fitCanvas, 100);
+        setTimeout(fitCanvas, 400);
+      });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', fitCanvas);
+        window.visualViewport.addEventListener('scroll', fitCanvas);
+      }
+
+      var keyCodes = {
+        ArrowUp: 38, ArrowDown: 40, ArrowLeft: 37, ArrowRight: 39,
+        Enter: 13, Space: 32, KeyX: 88, KeyC: 67,
+        KeyW: 87, KeyA: 65, KeyS: 83, KeyD: 68
+      };
+      var pressed = Object.create(null);
+      var keyRef = Object.create(null);
+
+      function dispatchKey(type, key, code) {
+        var keyCode = keyCodes[code] || keyCodes[key] || 0;
+        var ev = new KeyboardEvent(type, { key: key, code: code, bubbles: true, cancelable: true });
+        Object.defineProperty(ev, 'keyCode', { get: function () { return keyCode; } });
+        Object.defineProperty(ev, 'which', { get: function () { return keyCode; } });
+        window.dispatchEvent(ev);
+        document.dispatchEvent(ev);
+        canvas.dispatchEvent(ev);
+      }
+
+      function setKey(code, key, down) {
+        var n = keyRef[code] || 0;
+        if (down) {
+          if (n === 0) {
+            pressed[code] = true;
+            dispatchKey('keydown', key, code);
+          }
+          keyRef[code] = n + 1;
+        } else {
+          if (n <= 0) return;
+          keyRef[code] = n - 1;
+          if (keyRef[code] === 0) {
+            pressed[code] = false;
+            dispatchKey('keyup', key, code);
+          }
+        }
+      }
+
+      function btnPressed(btn) {
+        return !!(btn && (btn.pressed || btn.value > 0.5));
+      }
+
+      function setupGamepad() {
+        var STICK = 0.35;
+        var gpHeld = Object.create(null);
+        var GP_BINDINGS = [
+          ['ArrowUp', 'ArrowUp'], ['ArrowDown', 'ArrowDown'],
+          ['ArrowLeft', 'ArrowLeft'], ['ArrowRight', 'ArrowRight'],
+          ['KeyW', 'w'], ['KeyA', 'a'], ['KeyS', 's'], ['KeyD', 'd'],
+          ['KeyX', 'x'], ['KeyC', 'c'], ['Space', ' '], ['Enter', 'Enter']
+        ];
+
+        function setGp(code, key, down) {
+          if (gpHeld[code] === down) return;
+          gpHeld[code] = down;
+          setKey(code, key, down);
+        }
+
+        function releaseAllGamepad() {
+          GP_BINDINGS.forEach(function (b) {
+            setGp(b[0], b[1], false);
+          });
+        }
+
+        function applyGamepad(gp) {
+          var ax = gp.axes || [];
+          var bt = gp.buttons || [];
+          var lx = ax[0] || 0;
+          var ly = ax[1] || 0;
+          var rx = ax[2] || 0;
+          var ry = ax[3] || 0;
+
+          var up = btnPressed(bt[12]) || ly < -STICK;
+          var down = btnPressed(bt[13]) || ly > STICK;
+          var left = btnPressed(bt[14]) || lx < -STICK;
+          var right = btnPressed(bt[15]) || lx > STICK;
+
+          setGp('ArrowUp', 'ArrowUp', up);
+          setGp('ArrowDown', 'ArrowDown', down);
+          setGp('ArrowLeft', 'ArrowLeft', left);
+          setGp('ArrowRight', 'ArrowRight', right);
+
+          setGp('KeyW', 'w', ry < -STICK);
+          setGp('KeyS', 's', ry > STICK);
+          setGp('KeyA', 'a', rx < -STICK);
+          setGp('KeyD', 'd', rx > STICK);
+
+          setGp('KeyX', 'x', btnPressed(bt[0]));
+          setGp('Space', ' ', btnPressed(bt[1]) || btnPressed(bt[5]));
+          setGp('KeyC', 'c', btnPressed(bt[2]) || btnPressed(bt[4]));
+          setGp('Enter', 'Enter', btnPressed(bt[9]) || btnPressed(bt[8]));
+        }
+
+        function pollGamepads() {
+          if (gameStarted) {
+            var pads = navigator.getGamepads ? navigator.getGamepads() : [];
+            var pad = null;
+            for (var i = 0; i < pads.length; i++) {
+              if (pads[i] && pads[i].connected) {
+                pad = pads[i];
+                break;
+              }
+            }
+            if (pad) applyGamepad(pad);
+            else releaseAllGamepad();
+          }
+          requestAnimationFrame(pollGamepads);
+        }
+
+        window.addEventListener('gamepadconnected', function () {
+          if (navigator.getGamepads) navigator.getGamepads();
+          unlockAudio();
+        });
+        window.addEventListener('gamepaddisconnected', releaseAllGamepad);
+
+        requestAnimationFrame(pollGamepads);
+      }
+
+      function bindButton(btn) {
+        var code = btn.getAttribute('data-code');
+        var key = btn.getAttribute('data-key');
+        function down(e) { e.preventDefault(); tryLockLandscape(); setKey(code, key, true); }
+        function up(e) { e.preventDefault(); setKey(code, key, false); }
+        btn.addEventListener('touchstart', down, { passive: false });
+        btn.addEventListener('touchend', up, { passive: false });
+        btn.addEventListener('touchcancel', up, { passive: false });
+        btn.addEventListener('mousedown', down);
+        btn.addEventListener('mouseup', up);
+        btn.addEventListener('mouseleave', up);
+      }
+
+      document.querySelectorAll('.action-btn, .camera-btn').forEach(bindButton);
+
+      function setupStick() {
+        var zone = document.getElementById('stick-zone');
+        var knob = document.getElementById('move-knob');
+        var active = null;
+        var state = { up: false, down: false, left: false, right: false };
+        var map = {
+          up: { key: 'ArrowUp', code: 'ArrowUp' },
+          down: { key: 'ArrowDown', code: 'ArrowDown' },
+          left: { key: 'ArrowLeft', code: 'ArrowLeft' },
+          right: { key: 'ArrowRight', code: 'ArrowRight' }
+        };
+
+        function update(nx, ny) {
+          var want = { up: ny < -0.35, down: ny > 0.35, left: nx < -0.35, right: nx > 0.35 };
+          ['up', 'down', 'left', 'right'].forEach(function (dir) {
+            if (want[dir] !== state[dir]) {
+              state[dir] = want[dir];
+              setKey(map[dir].code, map[dir].key, want[dir]);
+            }
+          });
+        }
+
+        function reset() {
+          knob.style.transform = 'translate(-50%, -50%)';
+          update(0, 0);
+        }
+
+        function move(x, y) {
+          var r = zone.getBoundingClientRect();
+          var cx = r.left + r.width / 2;
+          var cy = r.top + r.height / 2;
+          var max = Math.min(r.width, r.height) * 0.35;
+          var dx = x - cx;
+          var dy = y - cy;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > max) {
+            dx = dx / dist * max;
+            dy = dy / dist * max;
+          }
+          knob.style.transform = 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px))';
+          update(dx / max, dy / max);
+        }
+
+        zone.addEventListener('touchstart', function (e) {
+          e.preventDefault();
+          tryLockLandscape();
+          active = e.changedTouches[0].identifier;
+          move(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        }, { passive: false });
+        zone.addEventListener('touchmove', function (e) {
+          e.preventDefault();
+          for (var i = 0; i < e.changedTouches.length; i++) {
+            var t = e.changedTouches[i];
+            if (t.identifier === active) move(t.clientX, t.clientY);
+          }
+        }, { passive: false });
+        zone.addEventListener('touchend', reset, { passive: false });
+        zone.addEventListener('touchcancel', reset, { passive: false });
+      }
+
+      setupStick();
+      setupGamepad();
+
+      function unlockAudio() {
+        try {
+          if (typeof Module !== 'undefined' && Module.SDL2 && Module.SDL2.audioContext) {
+            Module.SDL2.audioContext.resume();
+          }
+        } catch (e) {}
+      }
+
+      ['pointerdown', 'touchstart', 'keydown', 'click'].forEach(function (evt) {
+        document.addEventListener(evt, function () { tryLockLandscape(); unlockAudio(); fitCanvas(); }, { capture: true, passive: true });
+      });
+
+      window.Module = {
+        resizeCanvas: !isMobile,
+        webGLContextAttributes: { alpha: true, antialias: false, depth: true, stencil: false },
+        preRun: [],
+        postRun: [function () {
+          fitCanvas();
+          if (typeof Browser !== 'undefined') Browser.resizeCanvas = !isMobile;
+          unlockAudio();
+          if (Module.canvas) Module.canvas.focus();
+        }],
+        print: function (text) { console.log(text); },
+        printErr: function (text) { console.error(text); },
+        canvas: (function () {
+          fitCanvas();
+          canvas.addEventListener('webglcontextlost', function (e) {
+            alert('WebGL context lost. Reload the page.');
+            e.preventDefault();
+          }, false);
+          return canvas;
+        })(),
+        setStatus: function () {}
+      };
+
+      initLang();
+
+      var startBtn = document.getElementById('start-btn');
+
+      function startGame() {
+        if (gameStarted) return;
+        gameStarted = true;
+        document.body.classList.add('game-started');
+        startBtn.disabled = true;
+        startBtn.textContent = t('start.loading');
+        tryLockLandscape();
+        unlockAudio();
+        fitCanvas();
+        if (isMobile) requestAnimationFrame(guardBuffer);
+        if (navigator.getGamepads) navigator.getGamepads();
+
+        var script = document.createElement('script');
+        script.src = 'sm64.js';
+        script.async = true;
+        script.onload = function () {
+          startBtn.textContent = t('start.button');
+        };
+        script.onerror = function () {
+          startBtn.disabled = false;
+          startBtn.textContent = t('start.button');
+          gameStarted = false;
+          document.body.classList.remove('game-started');
+          alert(t('start.loadError'));
+        };
+        document.body.appendChild(script);
+      }
+
+      startBtn.addEventListener('click', startGame);
+      startBtn.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          startGame();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
