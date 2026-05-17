@@ -11,12 +11,6 @@ Browser-based port of SM64 for the N64 64, delivered as a static site using WebA
 - Mobile layout: fixed render buffer, viewport-aware scaling, landscape hint
 - GitHub Pages–ready deployment (static files only, no build step)
 
-## Live demo
-
-After you enable GitHub Pages, set the site URL here:
-
-`https://<username>.github.io/<repository>/`
-
 ## Requirements
 
 | Target | Minimum |
