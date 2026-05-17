@@ -1,6 +1,6 @@
-# Super Mario 64 — Web Edition
+# SM64 — Web Edition
 
-Browser-based port of Super Mario 64 for the Nintendo 64, delivered as a static site using WebAssembly and WebGL. The game loads on demand after the start screen and runs without a native install.
+Browser-based port of SM64 for the N64 64, delivered as a static site using WebAssembly and WebGL. The game loads on demand after the start screen and runs without a native install.
 
 ## Features
 
@@ -98,24 +98,4 @@ The workflow uploads the repository root as the site artifact (`index.html`, `sm
     └── pages.yml       # GitHub Pages deployment
 ```
 
-## Legal notice
 
-**Super Mario 64** and related trademarks are property of **Nintendo Co., Ltd.** This repository is an independent fan project and is **not** affiliated with, sponsored by, or endorsed by Nintendo.
-
-- Do not use this project to imply official Nintendo distribution or support.
-- You are responsible for compliance with applicable copyright and trademark laws in your jurisdiction before publishing or sharing a fork.
-- Game logic and assets embedded in `sm64.wasm` remain subject to the rights of their respective owners.
-
-Use at your own risk. The maintainers provide no warranty (see `LICENSE`).
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports and pull requests are welcome for the web shell (`index.html`) and deployment configuration. Changes that require rebuilding `sm64.wasm` should document the toolchain and source revision used.
-
-## Security
-
-To report a security issue, see [SECURITY.md](SECURITY.md).
-
-## License
-
-The web shell and repository metadata are licensed under the [MIT License](LICENSE). Third-party components are described in [THIRD_PARTY.md](THIRD_PARTY.md).
