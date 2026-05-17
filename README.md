@@ -68,16 +68,6 @@ Open `http://localhost:8080/` in your browser.
 npx --yes serve .
 ```
 
-## Deploy to GitHub Pages
-
-1. Create a new repository and push this project to the `main` branch.
-2. In the repository: **Settings → Pages → Build and deployment**.
-3. Set **Source** to **GitHub Actions**.
-4. Push to `main`. The workflow in `.github/workflows/pages.yml` publishes the site.
-5. After the workflow succeeds, open the URL shown under **Settings → Pages**.
-
-The workflow uploads the repository root as the site artifact (`index.html`, `sm64.js`, `sm64.wasm`, and supporting files).
-
 ## Project structure
 
 ```
